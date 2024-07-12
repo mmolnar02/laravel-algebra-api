@@ -15,6 +15,9 @@ Route::post('/login', AuthController::class . '@login')
 Route::post('/register', AuthController::class . '@register')
     ->name('register');
 
+Route::post('/refresh', AuthController::class . '@refresh')
+    ->name('refresh');
+
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/logout', AuthController::class . '@logout')

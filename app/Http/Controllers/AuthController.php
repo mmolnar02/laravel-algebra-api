@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RegisterRequest;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Tymon\JWTAuth\Contracts\Providers\JWT;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
@@ -16,22 +18,34 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
-        return $this->respondWithToken($token);
+        return $this->respondWithToken($token, auth()->user());
     }
 
-    // public function register(RegisterRequest $request)
-    // {
-    //     $data = array_merge(
-    //         $request->validated(),
-    //         ['email_verified_at' => now()]
-    //     );
+    public function register(RegisterRequest $request)
+    {
+        $data = array_merge(
+            $request->validated(),
+            ['email_verified_at' => now()]
+        );
 
-    //     $user = User::create($data);
+        $user = User::create($data);
 
-    //     auth()->login($user);
+        $token = auth()->login($user);
 
-    //     return redirect()->intended('dashboard');
-    // }
+        return $this->respondWithToken($token, $user);
+    }
+
+    public function refresh(Request $request)
+    {
+        $refreshToken = $request->input('refresh_token');
+
+        //JWTAuth::invalidate(auth()->token());
+        //$user = JWTAuth::authenticate($refreshToken);
+        $newToken = JWTAuth::setToken($refreshToken)->refresh();
+
+
+        return $this->respondWithToken($newToken, null);
+    }
 
     public function logout()
     {
@@ -45,13 +59,13 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function respondWithToken($token)
+    protected function respondWithToken(string $token, ?User $user)
     {
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => auth()->factory()->getTTL(),
-            'refresh_token' => null
+            'refresh_token' => $user ? JWTAuth::fromUser($user): null
         ]);
     }
 }
