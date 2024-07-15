@@ -7,6 +7,9 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\NavigationController;
 
+Route::get('/', function () {
+    return response()->json(['message' => 'Welcome!']);
+});
 
 Route::post('/login', AuthController::class . '@login')
     ->name('login');
